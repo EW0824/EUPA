@@ -4,39 +4,40 @@ import numpy as np
 import torch
 from ga.model import predict
 
+def compute_visibility_l2(perturbation):
+    # We can do MSE or L2 here
+    return torch.norm(perturbation).item()
 
-def constrained_fitness_func(ga_instance, solution, solution_idx, pixel_std, model, input_batch, original_label, pixel_constraint_weight, max_perturbation_magnitude):
 
+def constrained_fitness_func(ga_instance, solution, solution_idx, pixel_std, model, input_batch, original_label, pixel_constraint_weight, max_perturbation_magnitude, epsilon):
+
+    # 1) Convert chromosome to perturbation
     # This already has the pixel constraints applied
     perturbation = torch.tensor(solution).float().reshape(input_batch.shape[1:]) # [channel, height, width] (3*224*224) instead of (64*3*224*224)
 
     # Apply pixel constraints
     # perturbation = apply_pixel_constraints(perturbation, pixel_std, pixel_constraint_weight, max_perturbation_magnitude)
 
-    perturbed_input = input_batch + perturbation.unsqueeze(0) # Unsqueeze to add the batch dimension to apply to the entire batch
-    perturbed_input = torch.clamp(perturbed_input, 0, 1) # Ensure the pixel values are between 0 and 1
-
+    # 2) Calculate misclassification
+    perturbed_input = torch.clamp(input_batch + perturbation.unsqueeze(0), 0, 1)
     # Get predictions after applying the perturbation
     prediction = predict(model, perturbed_input)
-
     # Calculate fitness based on misclassification likelihood (maximise misclassification)
     misclassification_score = (prediction != original_label).float().mean().item() # Get the mean of misclassification
     # print(f"Misclassification score: {misclassification_score}")
 
-    ########
-    # OBJECTIVE
-    ########
-    # Combine misclassification score and perturbation size
-    # Calculate perturbation size
-    # perturbation_magnitude = torch.norm(perturbation).item()
-    # print(f"Perturbation magnitude: {perturbation_magnitude}")
 
-    # fitness_double_objective = misclassification_score - config["fitness"]["perturbation_weight"] * perturbation_magnitude
+    # 3) Compute visibility measure (xi)
+    xi = compute_visibility_l2(perturbation)
 
-    # Single objective fitness
-    fitness_single_objective = misclassification_score
 
-    return fitness_single_objective
+    # 4) Enforce epsilon constraint
+    if xi > epsilon:
+        fitness = 0.0
+    else:
+        fitness = misclassification_score
+
+    return fitness
 
 
 

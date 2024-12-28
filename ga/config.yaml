@@ -6,14 +6,20 @@ ga:
   mutation_percent_genes: 10
   init_range_low: -0.1
   init_range_high: 0.1
+  parent_selection_type: "tournament"
+  crossover_type: "uniform"
+  crossover_probability: 0.5
+  mutation_type: "random"
+  mutation_probability: 0.2
 
 fitness:
-  perturbation_weight: 0.01
+  # perturbation_weight: 0.01
   pixel_constraint_weight: 0.5
   max_perturbation_magnitude: 85
+  epsilon: 0.2
 
 model:
-  model_type: "googlenet"
+  model_type: "vit_b_16"
   batch_size: 64
 
 visualization:
