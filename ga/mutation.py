@@ -3,7 +3,7 @@ import torch
 from ga.fitness import apply_pixel_constraints
 
 
-def custom_mutation(offspring, ga_instance, pixel_std, pixel_constraint_weight, max_perturbation_magnitude, input_batch):
+def custom_mutation(offspring, ga_instance, pixel_std, pixel_constraint_weight, max_perturbation_magnitude, input_batch, apply_pixel_constraints=True,):
     for chromosome in offspring:        
         # Calculate the number of genes to mutate
         num_genes = len(chromosome)
@@ -20,7 +20,9 @@ def custom_mutation(offspring, ga_instance, pixel_std, pixel_constraint_weight, 
 
         # Apply constraints after mutation
         perturbation = torch.tensor(chromosome).float().reshape(input_batch.shape[1:])
-        perturbation = apply_pixel_constraints(perturbation, pixel_std, pixel_constraint_weight, max_perturbation_magnitude)
+        if apply_pixel_constraints:
+            perturbation = apply_pixel_constraints(perturbation, pixel_std, pixel_constraint_weight, max_perturbation_magnitude)
+
         chromosome[:] = perturbation.flatten().numpy()
 
     return offspring

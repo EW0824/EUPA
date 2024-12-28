@@ -15,11 +15,17 @@ import torchvision.models as models
 # Load a pre-trained model
 def load_model(model_type="googlenet"):
     if model_type == "googlenet":
+        # Accuracy: 69.78
         model = models.googlenet(weights='DEFAULT')
     elif model_type == "resnet18":
-        model = models.resnet18(weights='DEFAULT')
+        # Accuracy: 69.76
+        model = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
     elif model_type == "resnet50":
-        model = models.resnet50(weights='DEFAULT')
+        # Accuracy: 76.13
+        model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+    elif model_type == "vit_b_16":
+        # Accuracy: 81.072
+        model = models.vit_b_16(weights=models.ViT_B_16_Weights.IMAGENET1K_V1)
     else:
         raise ValueError(f"Model type {model_type} not supported.")
     
