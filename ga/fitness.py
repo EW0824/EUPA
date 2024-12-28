@@ -9,14 +9,11 @@ def compute_visibility_l2(perturbation):
     return torch.norm(perturbation).item()
 
 
-def constrained_fitness_func(ga_instance, solution, solution_idx, pixel_std, model, input_batch, original_label, pixel_constraint_weight, max_perturbation_magnitude, epsilon):
+def constrained_fitness_func(ga_instance, solution, solution_idx, model, input_batch, original_label, pixel_constraint_weight, max_perturbation_magnitude, epsilon):
 
     # 1) Convert chromosome to perturbation
     # This already has the pixel constraints applied
     perturbation = torch.tensor(solution).float().reshape(input_batch.shape[1:]) # [channel, height, width] (3*224*224) instead of (64*3*224*224)
-
-    # Apply pixel constraints
-    # perturbation = apply_pixel_constraints(perturbation, pixel_std, pixel_constraint_weight, max_perturbation_magnitude)
 
     # 2) Calculate misclassification
     perturbed_input = torch.clamp(input_batch + perturbation.unsqueeze(0), 0, 1)
