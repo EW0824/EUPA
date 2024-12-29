@@ -12,13 +12,11 @@ def compute_visibility_l2(perturbation):
 def constrained_fitness_func(ga_instance, solution, solution_idx, model, input_batch, original_label, pixel_constraint_weight, max_perturbation_magnitude, epsilon_init, epsilon_end, penalty_factor):
 
     # 1) Convert chromosome to perturbation
-    # This already has the pixel constraints applied
     perturbation = torch.tensor(solution, device=input_batch.device, dtype=torch.float32).float().reshape(input_batch.shape[1:]) # [channel, height, width] (3*224*224) instead of (64*3*224*224)
 
     # 2) Calculate misclassification
     perturbed_input = torch.clamp(input_batch + perturbation.unsqueeze(0), 0, 1)
-    # Get predictions after applying the perturbation
-    prediction = predict(model, perturbed_input)
+    prediction = predict(model, perturbed_input) 
     # Calculate fitness based on misclassification likelihood (maximise misclassification)
     misclassification_score = (prediction != original_label).float().mean().item() # Get the mean of misclassification
 
@@ -31,7 +29,9 @@ def constrained_fitness_func(ga_instance, solution, solution_idx, model, input_b
 
     # print(f"Misclassification score: {misclassification_score}")
     # print(f"Epsilon: {epsilon}")
-    # print(f"Visibility: {xi}")
+    # print(f"Xi: {xi}")
+    # print(f"Penalty factor: {penalty_factor}")
+    # print(f"xi-epsilon: {max(xi - epsilon, 0)}")
 
 
     # 4) Enforce epsilon constraint
@@ -39,12 +39,13 @@ def constrained_fitness_func(ga_instance, solution, solution_idx, model, input_b
         fitness = misclassification_score
 
     else:
-        # difference = xi - epsilon
-        # fitness = 0
         # Penalty function instead of strict cutoff
         # penalty_factor = 1e-3
         # l = lambda_0 * (1 + solution_idx)
         fitness = misclassification_score - penalty_factor * max((xi - epsilon), 0)
+
+    # print(f"Fitness: {misclassification_score}-{penalty_factor * max((xi - epsilon), 0)}={fitness}")
+
 
     return fitness
 
