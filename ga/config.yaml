@@ -26,4 +26,4 @@ model:
 
 visualization:
   visualize: True
-  visualize_every: 1
+  visualize_every: 4

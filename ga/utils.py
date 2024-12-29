@@ -99,8 +99,9 @@ def pixel_cleaning_operation(offspring, cleaning_probability=0.1):
 
 # Convert a tensor to an image
 def denormalize_image(tensor):
-    mean_tensor = torch.tensor(mean).view(3, 1, 1)
-    std_tensor = torch.tensor(std).view(3, 1, 1)
+    # Need to send everything to the same device
+    mean_tensor = torch.tensor(mean).view(3, 1, 1).to(tensor.device)
+    std_tensor = torch.tensor(std).view(3, 1, 1).to(tensor.device)
     tensor = tensor * std_tensor + mean_tensor
     tensor = torch.clamp(tensor, 0, 1) # Ensure the pixel values are between 0 and 1
     return tensor
@@ -114,7 +115,7 @@ def visualize_images_batch(input_batch, perturbation):
     # Denormalize the input images
     input_images_denormalized = denormalize_image(input_images)
 
-
+    perturbation = perturbation.to(input_images_denormalized.device)
     perturbed_images = input_images_denormalized + perturbation.unsqueeze(0)
     perturbed_images = torch.clamp(perturbed_images, 0, 1) 
 
