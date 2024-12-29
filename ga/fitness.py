@@ -9,11 +9,11 @@ def compute_visibility_l2(perturbation):
     return torch.norm(perturbation).item()
 
 
-def constrained_fitness_func(ga_instance, solution, solution_idx, model, input_batch, original_label, pixel_constraint_weight, max_perturbation_magnitude, epsilon):
+def constrained_fitness_func(ga_instance, solution, solution_idx, model, input_batch, original_label, pixel_constraint_weight, max_perturbation_magnitude, epsilon_init, epsilon_end, penalty_factor):
 
     # 1) Convert chromosome to perturbation
     # This already has the pixel constraints applied
-    perturbation = torch.tensor(solution).float().reshape(input_batch.shape[1:]) # [channel, height, width] (3*224*224) instead of (64*3*224*224)
+    perturbation = torch.tensor(solution, device=input_batch.device, dtype=torch.float32).float().reshape(input_batch.shape[1:]) # [channel, height, width] (3*224*224) instead of (64*3*224*224)
 
     # 2) Calculate misclassification
     perturbed_input = torch.clamp(input_batch + perturbation.unsqueeze(0), 0, 1)
@@ -21,18 +21,30 @@ def constrained_fitness_func(ga_instance, solution, solution_idx, model, input_b
     prediction = predict(model, perturbed_input)
     # Calculate fitness based on misclassification likelihood (maximise misclassification)
     misclassification_score = (prediction != original_label).float().mean().item() # Get the mean of misclassification
-    # print(f"Misclassification score: {misclassification_score}")
 
 
     # 3) Compute visibility measure (xi)
     xi = compute_visibility_l2(perturbation)
 
+    # 4) Dynamic epsilon calculation
+    epsilon = epsilon_init - (epsilon_init - epsilon_end) * ga_instance.generations_completed / ga_instance.num_generations
+
+    # print(f"Misclassification score: {misclassification_score}")
+    # print(f"Epsilon: {epsilon}")
+    # print(f"Visibility: {xi}")
+
 
     # 4) Enforce epsilon constraint
-    if xi > epsilon:
-        fitness = 0.0
-    else:
+    if xi <= epsilon:
         fitness = misclassification_score
+
+    else:
+        # difference = xi - epsilon
+        # fitness = 0
+        # Penalty function instead of strict cutoff
+        # penalty_factor = 1e-3
+        # l = lambda_0 * (1 + solution_idx)
+        fitness = misclassification_score - penalty_factor * max((xi - epsilon), 0)
 
     return fitness
 

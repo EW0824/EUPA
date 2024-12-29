@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from ga.fitness import apply_pixel_constraints
 
-def integer_mutation(offspring, ga_instance):
+def random_float_mutation(offspring, ga_instance):
 
     # # Apply pixel cleaning operation before mutation
     # offspring = pixel_cleaning_operation(offspring)
@@ -15,7 +15,7 @@ def integer_mutation(offspring, ga_instance):
 
         # Flip each selected gene
         for mi in mutation_indices:
-            chromosome[mi] = np.random.randint(ga_instance.init_range_low, ga_instance.init_range_high + 1)
+            chromosome[mi] = np.random.uniform(ga_instance.init_range_low, ga_instance.init_range_high)
             # Flip from 0 to any int, or any int to zero or another int
     return offspring
 

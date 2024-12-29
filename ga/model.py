@@ -13,7 +13,7 @@ import torchvision.models as models
 ########
 
 # Load a pre-trained model
-def load_model(model_type="googlenet"):
+def load_model(model_type="googlenet", device=None):
     if model_type == "googlenet":
         # Accuracy: 69.78
         model = models.googlenet(weights='DEFAULT')
@@ -30,6 +30,10 @@ def load_model(model_type="googlenet"):
         raise ValueError(f"Model type {model_type} not supported.")
     
     model.eval() # Set the model to evaluation mode
+
+    if device is not None:
+        model = model.to(device)
+        print(f"Using device: {device}")
     return model
 
 
@@ -63,7 +67,7 @@ def predict(model, input_batch):
 # EVALUATION
 ########
 
-def evaluate_without_perturbation(model, dataloader):
+def evaluate_without_perturbation(model, dataloader, device):
     # Evaluate the model without the universal perturbation
     model.eval()
     correct = 0
@@ -71,6 +75,7 @@ def evaluate_without_perturbation(model, dataloader):
 
     with torch.no_grad():
         for images, labels in dataloader:
+            images, labels = images.to(device), labels.to(device)
             outputs = model(images)
             _, predicted = torch.max(outputs, 1)
             total += labels.size(0)
@@ -79,7 +84,7 @@ def evaluate_without_perturbation(model, dataloader):
     print(f"Accuracy without perturbation: {accuracy}")
     return accuracy
 
-def evaluate_with_perturbation(model, dataloader, perturbation):
+def evaluate_with_perturbation(model, dataloader, perturbation, device):
     # Evaluate the model with the universal perturbation
     model.eval()
     correct = 0
@@ -87,6 +92,7 @@ def evaluate_with_perturbation(model, dataloader, perturbation):
 
     with torch.no_grad():
         for images, labels in dataloader:
+            images, labels = images.to(device), labels.to(device)
             perturbed_images = images + perturbation
             perturbed_images = torch.clamp(perturbed_images, 0, 1) # Ensure the pixel values are between 0 and 1
             outputs = model(perturbed_images)
