@@ -14,6 +14,7 @@ import torchvision.models as models
 
 # Load a pre-trained model
 def load_model(model_type="googlenet", device=None):
+    print(f"Loading model: {model_type}")
     if model_type == "googlenet":
         # Accuracy: 69.78
         model = models.googlenet(weights='DEFAULT')
@@ -67,7 +68,9 @@ def predict(model, input_batch):
 # EVALUATION
 ########
 
-def evaluate_without_perturbation(model, dataloader, device):
+def evaluate_without_perturbation(model, dataloader, device='cpu'):
+    print(f"Using device: {device}")
+
     # Evaluate the model without the universal perturbation
     model.eval()
     correct = 0
@@ -84,11 +87,14 @@ def evaluate_without_perturbation(model, dataloader, device):
     print(f"Accuracy without perturbation: {accuracy}")
     return accuracy
 
-def evaluate_with_perturbation(model, dataloader, perturbation, device):
+def evaluate_with_perturbation(model, dataloader, perturbation, device='cpu'):
+    print(f"Using device: {device}")
+    
     # Evaluate the model with the universal perturbation
     model.eval()
     correct = 0
     total = 0
+    perturbation = perturbation.to(device)
 
     with torch.no_grad():
         for images, labels in dataloader:

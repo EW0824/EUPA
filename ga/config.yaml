@@ -30,7 +30,7 @@ fitness:
   penalty_factor: 0.1
 
 model:
-  model_type: "vit_b_16"
+  model_type: "googlenet"
   batch_size: 64
 
 visualization:
