@@ -1,23 +1,32 @@
-
 ga:
   num_generations: 8 # ~500 images in general
   num_parents_mating: 10
-  sol_per_pop: 20
-  mutation_percent_genes: 30
-  init_range_low: -1.0
-  init_range_high: 1.0
+  sol_per_pop: 40
+  init_range_low: -0.5
+  init_range_high: 0.5
   parent_selection_type: "tournament"
+  keep_elitism: 0
+  keep_parents: 0
+
+
+crossover:
   crossover_type: "uniform"
   crossover_probability: 0.5
-  mutation_probability: 0.2
+  pixel_cleaning_probability: 0.1
+
+mutation:
+  # mutation_probability: 0.5
+  # mutation_percent_genes: 80
+  p_m: 0.3
+  p_flip: 0.005
 
 fitness:
   # perturbation_weight: 0.01
   pixel_constraint_weight: 0.5
   max_perturbation_magnitude: 85
   # epsilon: 100
-  epsilon_init: 200
-  epsilon_end: 150
+  epsilon_init: 100
+  epsilon_end: 50
   penalty_factor: 0.1
 
 model:
