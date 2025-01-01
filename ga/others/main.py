@@ -2,8 +2,8 @@ import pygad
 import numpy as np
 import torch
 import os
-from ga.fitness import constrained_fitness_func
-from ga.model import load_model
+from ga.components.fitness import constrained_fitness_func
+from ga.components.model import load_model
 from ga.utils import get_dataloader, visualize_image_perturbation,visualize_image_perturbation_batch, visualize_perturbation, compute_pixel_statistics, config
 # from nn.models.googlenet import create_googlenet
 

@@ -1,5 +1,5 @@
 ga:
-  num_generations: 8 # ~500 images in general
+  num_generations: 16 # ~500 images in general
   num_parents_mating: 10
   sol_per_pop: 40
   init_range_low: -0.5
@@ -27,7 +27,7 @@ fitness:
   # epsilon: 100
   epsilon_init: 100
   epsilon_end: 50
-  penalty_factor: 0.1
+  penalty_factor: 0.2
 
 model:
   model_type: "googlenet"

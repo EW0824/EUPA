@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from ga.fitness import apply_pixel_constraints
+from ga.components.fitness import apply_pixel_constraints
 
 def paper_style_mutation(offspring, ga_instance, p_m=0.3, p_flip=0.005):
     """

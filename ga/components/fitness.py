@@ -2,7 +2,7 @@
 import pygad
 import numpy as np
 import torch
-from ga.model import predict
+from ga.components.model import predict
 
 def compute_visibility_l2(perturbation):
     # We can do MSE or L2 here
