@@ -11,7 +11,16 @@ def on_crossover_func(ga_instance, offspring, config):
 
 def on_generation_func(ga_instance, input_batch, top_perturbations, config):
 
+    ########
+    # LOGGING
+    ########
     print(f"\nGeneration {ga_instance.generations_completed} completed with fitness: {ga_instance.last_generation_fitness}")
+
+
+
+    ########
+    # SWITCHING BATCHES
+    ########
 
     # print(f"Input batch starting label: {labels[0]}")
 
@@ -20,6 +29,11 @@ def on_generation_func(ga_instance, input_batch, top_perturbations, config):
     # input_batch, labels = input_batch.to(device), labels.to(device)
     # print(f"New batch loaded with first label: {labels[0]}")
     
+
+    ########
+    # BEST SOLUTION
+    ########
+
     # Print the best fitness for this generation
     best_solution, best_solution_fitness, _ = ga_instance.best_solution()
     print(f"Best Fitness = {best_solution_fitness}\n")
@@ -30,11 +44,6 @@ def on_generation_func(ga_instance, input_batch, top_perturbations, config):
 
     num_zeros = np.count_nonzero(np.isclose(best_solution, 0.0))
     print(f"Best solution zeros count: {num_zeros}")
-
-    # # Print out samples from the top 3 perturbations
-    # top_fitness = sorted(ga_instance.last_generation_fitness)[-3:]
-    # for i, perturbation in enumerate(top_fitness):
-    #     print(f"Top {i+1} perturbation: {torch.norm(perturbation).item()}")
 
     best_perturbation = torch.tensor(best_solution).float().reshape(input_batch.shape[1:])
     top_perturbations.append(best_perturbation)
@@ -48,23 +57,32 @@ def on_generation_func(ga_instance, input_batch, top_perturbations, config):
         # get the current best perturbation
         visualize_images_batch(input_batch, best_perturbation)
 
+    ########
+    # MODIFY DYNAMIC PROBABILITIES
+    ########
+
+    cross_prob, mut_prob = calculate_dynamic_probs(ga_instance, config)
+    ga_instance.crossover_probability = cross_prob
+    ga_instance.mutation_probability = mut_prob
+    print(f"New crossover & mutation probabilities: {cross_prob}, {mut_prob}")
+
     # print(f"Generation {ga_instance.generations_completed}: Current Fitness: Best Fitness = {ga_instance.best_solution()[1]}")
 
 
 
-def calculate_dynamic_probs(ga_instance):
+def calculate_dynamic_probs(ga_instance, config):
 
     current_gen = ga_instance.generations_completed
     total_gens = ga_instance.num_generations
     frac = current_gen / total_gens
 
-    user_data = ga_instance.user_data
-    cross_start = user_data["cross_start"]
-    cross_end = user_data["cross_end"]
-    mut_start = user_data["mut_start"]
-    mut_end = user_data["mut_end"]
+    # user_data = ga_instance.user_data
+    cross_start = config["crossover"]["crossover_start"]
+    cross_end = config["crossover"]["crossover_end"]
+    mut_start = config["mutation"]["mutation_start"]
+    mut_end = config["mutation"]["mutation_end"]
 
-    cross_prob = cross_start - frac * (cross_end - cross_start)
-    mut_prob = mut_start - frac * (mut_end - mut_start)
+    cross_prob = cross_start - frac * (cross_start - cross_end)
+    mut_prob = mut_start - frac * (mut_start - mut_end)
 
     return cross_prob, mut_prob
