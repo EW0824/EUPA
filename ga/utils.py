@@ -80,8 +80,6 @@ def compute_pixel_statistics(dataloader):
     return pixel_mean, pixel_std
 
 
-
-
 ########
 # VISUALIZATION
 ########

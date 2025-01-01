@@ -12,11 +12,15 @@ ga:
 crossover:
   crossover_type: "uniform"
   crossover_probability: 0.5
+  crossover_start: 0.9
+  crossover_end: 0.4
   pixel_cleaning_probability: 0.1
 
 mutation:
   # mutation_probability: 0.5
   # mutation_percent_genes: 80
+  mutation_start: 0.6
+  mutation_end: 0.2
   p_m: 0.3
   p_flip: 0.005
 
