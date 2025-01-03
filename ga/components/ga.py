@@ -77,10 +77,10 @@ def calculate_dynamic_probs(ga_instance, config):
     frac = current_gen / total_gens
 
     # user_data = ga_instance.user_data
-    cross_start = config["crossover"]["crossover_start"]
-    cross_end = config["crossover"]["crossover_end"]
-    mut_start = config["mutation"]["mutation_start"]
-    mut_end = config["mutation"]["mutation_end"]
+    cross_start = config["crossover"]["p_crossover_init"]
+    cross_end = config["crossover"]["p_crossover_end"]
+    mut_start = config["mutation"]["p_mutation_init"]
+    mut_end = config["mutation"]["p_mutation_end"]
 
     cross_prob = cross_start - frac * (cross_start - cross_end)
     mut_prob = mut_start - frac * (mut_start - mut_end)

@@ -9,7 +9,7 @@ def compute_visibility_l2(perturbation):
     return torch.norm(perturbation).item()
 
 
-def constrained_fitness_func(ga_instance, solution, solution_idx, model, input_batch, original_label, pixel_constraint_weight, max_perturbation_magnitude, epsilon_init, epsilon_end, penalty_factor):
+def constrained_fitness_func(ga_instance, solution, solution_idx, model, input_batch, labels, epsilon_init, epsilon_end, penalty_factor):
 
     # 1) Convert chromosome to perturbation
     perturbation = torch.tensor(solution, device=input_batch.device, dtype=torch.float32).float().reshape(input_batch.shape[1:]) # [channel, height, width] (3*224*224) instead of (64*3*224*224)
@@ -18,14 +18,11 @@ def constrained_fitness_func(ga_instance, solution, solution_idx, model, input_b
     perturbed_input = torch.clamp(input_batch + perturbation.unsqueeze(0), 0, 1)
     prediction = predict(model, perturbed_input) 
     # Calculate fitness based on misclassification likelihood (maximise misclassification)
-    misclassification_score = (prediction != original_label).float().mean().item() # Get the mean of misclassification
+    misclassification_score = (prediction != labels).float().mean().item() # Get the mean of misclassification
 
 
     # 3) Compute visibility measure (xi)
     xi = compute_visibility_l2(perturbation)
-
-    # 4) Dynamic epsilon calculation
-    epsilon = epsilon_init - (epsilon_init - epsilon_end) * ga_instance.generations_completed / ga_instance.num_generations
 
     # print(f"Misclassification score: {misclassification_score}")
     # print(f"Epsilon: {epsilon}")
@@ -33,8 +30,10 @@ def constrained_fitness_func(ga_instance, solution, solution_idx, model, input_b
     # print(f"Penalty factor: {penalty_factor}")
     # print(f"xi-epsilon: {max(xi - epsilon, 0)}")
 
+    # 4) Calculate epsilon (exponential decay)
+    epsilon = epsilon_init * (epsilon_end / epsilon_init) ** (ga_instance.generations_completed / ga_instance.num_generations)
 
-    # 4) Enforce epsilon constraint
+    # 5) Enforce epsilon constraint
     if xi <= epsilon:
         fitness = misclassification_score
 
@@ -45,7 +44,6 @@ def constrained_fitness_func(ga_instance, solution, solution_idx, model, input_b
         fitness = misclassification_score - penalty_factor * max((xi - epsilon), 0)
 
     # print(f"Fitness: {misclassification_score}-{penalty_factor * max((xi - epsilon), 0)}={fitness}")
-
 
     return fitness
 
