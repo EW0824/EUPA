@@ -9,7 +9,10 @@ def on_crossover_func(ga_instance, offspring, config):
     offspring = pixel_cleaning_operation(offspring, cleaning_probability)
     return offspring
 
-def on_generation_func(ga_instance, input_batch, top_perturbations, config):
+def on_generation_func(ga_instance, dataloader, device, top_perturbations, config):
+
+    input_batch = ga_instance.user_data["input_batch"]
+    labels = ga_instance.user_data["labels"]
 
     ########
     # LOGGING
@@ -17,17 +20,22 @@ def on_generation_func(ga_instance, input_batch, top_perturbations, config):
     print(f"\nGeneration {ga_instance.generations_completed} completed with fitness: {ga_instance.last_generation_fitness}")
 
 
-
     ########
     # SWITCHING BATCHES
     ########
+    current_gen = ga_instance.generations_completed
+    if current_gen % 4 == 0:
+        input_batch, labels = next(iter(dataloader))
+        input_batch, labels = input_batch.to(device), labels.to(device)
+        ga_instance.user_data["input_batch"] = input_batch
+        ga_instance.user_data["labels"] = labels
+        print(f"New batch loaded with first label: {labels[0]}")
 
     # print(f"Input batch starting label: {labels[0]}")
 
     # New batch every generation
     # input_batch, labels = next(iter(dataloader))
     # input_batch, labels = input_batch.to(device), labels.to(device)
-    # print(f"New batch loaded with first label: {labels[0]}")
     
 
     ########

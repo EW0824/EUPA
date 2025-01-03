@@ -9,7 +9,10 @@ def compute_visibility_l2(perturbation):
     return torch.norm(perturbation).item()
 
 
-def constrained_fitness_func(ga_instance, solution, solution_idx, model, input_batch, labels, epsilon_init, epsilon_end, penalty_factor):
+def constrained_fitness_func(ga_instance, solution, solution_idx, model, epsilon_init, epsilon_end, penalty_factor):
+
+    input_batch = ga_instance.user_data["input_batch"]
+    labels = ga_instance.user_data["labels"]
 
     # 1) Convert chromosome to perturbation
     perturbation = torch.tensor(solution, device=input_batch.device, dtype=torch.float32).float().reshape(input_batch.shape[1:]) # [channel, height, width] (3*224*224) instead of (64*3*224*224)
