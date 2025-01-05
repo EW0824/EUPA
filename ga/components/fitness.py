@@ -4,9 +4,12 @@ import numpy as np
 import torch
 from ga.components.model import predict
 
-def compute_visibility_l2(perturbation):
+def compute_norm(perturbation, type="l2"):
     # We can do MSE or L2 here
-    return torch.norm(perturbation).item()
+    if type == "l2":
+        return torch.norm(perturbation).item()
+    elif type == "mse":
+        return torch.mean(perturbation ** 2).item()
 
 
 def constrained_fitness_func(ga_instance, solution, solution_idx, model, epsilon_init, epsilon_end, penalty_factor):
@@ -25,7 +28,7 @@ def constrained_fitness_func(ga_instance, solution, solution_idx, model, epsilon
 
 
     # 3) Compute visibility measure (xi)
-    xi = compute_visibility_l2(perturbation)
+    xi = compute_norm(perturbation)
 
     # print(f"Misclassification score: {misclassification_score}")
     # print(f"Epsilon: {epsilon}")
@@ -35,7 +38,8 @@ def constrained_fitness_func(ga_instance, solution, solution_idx, model, epsilon
 
     # 4) Calculate epsilon (exponential decay)
     epsilon = epsilon_init * (epsilon_end / epsilon_init) ** (ga_instance.generations_completed / ga_instance.num_generations)
-
+    ga_instance.user_data["epsilon"] = epsilon
+    
     # 5) Enforce epsilon constraint
     if xi <= epsilon:
         fitness = misclassification_score

@@ -1,18 +1,26 @@
 import numpy as np
 import torch
-from ga.components.crossover import pixel_cleaning_operation
+from numpy import linalg
+from ga.components.crossover import apply_pixel_cleaning
+from ga.components.fitness import compute_norm
 from ga.utils import visualize_images_batch
 
 def on_crossover_func(ga_instance, offspring, config):
     # print("Number of zeros before pixel cleaning in crossover:", torch.sum(torch.tensor(offspring == 0)))
-    cleaning_probability =  config["crossover"]["pixel_cleaning_probability"]
-    offspring = pixel_cleaning_operation(offspring, cleaning_probability)
+    
+    norms = linalg.norm(offspring, axis=1)
+
+    for i, chromosome in enumerate(offspring):
+        if norms[i] > ga_instance.user_data["epsilon"]:
+            cleaning_probability =  config["crossover"]["pixel_cleaning_probability"]
+            offspring[i] = apply_pixel_cleaning(chromosome, cleaning_probability)
     return offspring
 
-def on_generation_func(ga_instance, dataloader, device, top_perturbations, config):
+def on_generation_func(ga_instance, dataloader, device, config):
 
     input_batch = ga_instance.user_data["input_batch"]
     labels = ga_instance.user_data["labels"]
+    top_perturbations = ga_instance.user_data["top_perturbations"]
 
     ########
     # LOGGING
