@@ -2,8 +2,11 @@ import numpy as np
 import torch
 from numpy import linalg
 from ga.components.crossover import apply_pixel_cleaning
-from ga.components.fitness import compute_norm
-from ga.utils import visualize_images_batch
+from ga.utils import visualize_images_batch, compute_norm, compute_misclassification, compute_avg_mse, compute_confidence_score
+
+########
+# ON CROSSOVER
+########
 
 def on_crossover_func(ga_instance, offspring, config):
     # print("Number of zeros before pixel cleaning in crossover:", torch.sum(torch.tensor(offspring == 0)))
@@ -16,16 +19,59 @@ def on_crossover_func(ga_instance, offspring, config):
             offspring[i] = apply_pixel_cleaning(chromosome, cleaning_probability)
     return offspring
 
-def on_generation_func(ga_instance, dataloader, device, config):
+
+########
+# ON GENERATION
+########
+
+def on_generation_func(ga_instance, dataloader, model, device, config, metrics_log):
 
     input_batch = ga_instance.user_data["input_batch"]
     labels = ga_instance.user_data["labels"]
     top_perturbations = ga_instance.user_data["top_perturbations"]
+    input_batch, labels = input_batch.to(device), labels.to(device)
 
     ########
     # LOGGING
     ########
-    print(f"\nGeneration {ga_instance.generations_completed} completed with fitness: {ga_instance.last_generation_fitness}")
+    gen = ga_instance.generations_completed
+    print(f"\n--- Generation {gen} Completed ---")
+    # print(f"\nGeneration {ga_instance.generations_completed} completed with fitness scores: {ga_instance.last_generation_fitness}")
+
+    # Best solution
+    best_sol, best_fit, _ = ga_instance.best_solution()
+    best_perturb = torch.tensor(best_sol).float().reshape(input_batch.shape[1:]).float().to(device)
+    print(f"Best Fitness = {best_fit}")
+
+    # # Possibly check partial genes in best solution
+    # snippet = best_sol[:10]
+    # print(f"Best solution snippet: {snippet}")
+    # num_zeros = np.count_nonzero(np.isclose(best_sol, 0.0))
+    # print(f"Best solution zeros count: {num_zeros}")
+
+    # 1. Norm
+    norm_val = compute_norm(best_perturb)
+    print(f"Best perturbation norm: {norm_val}")
+
+    # 2. MSE
+    mse_val = compute_avg_mse(input_batch, best_perturb)
+    print(f"Best perturbation MSE: {mse_val}")
+
+    # 3. Misclassification rate
+    misclassification_score = compute_misclassification(model, input_batch, labels, best_perturb)
+    print(f"Misclassification score: {misclassification_score}")
+
+
+    # 4. Confidence score
+    confidence_score = compute_confidence_score(model, input_batch, labels)
+    print(f"Confidence score: {confidence_score}")
+
+    # Logging the metrics
+    metrics_log["gen"].append(gen)
+    metrics_log["norm"].append(norm_val)
+    metrics_log["avg_mse"].append(mse_val)
+    metrics_log["misclassification"].append(misclassification_score)
+    metrics_log["confidence"].append(confidence_score)
 
 
     ########
@@ -46,24 +92,6 @@ def on_generation_func(ga_instance, dataloader, device, config):
     # input_batch, labels = input_batch.to(device), labels.to(device)
     
 
-    ########
-    # BEST SOLUTION
-    ########
-
-    # Print the best fitness for this generation
-    best_solution, best_solution_fitness, _ = ga_instance.best_solution()
-    print(f"Best Fitness = {best_solution_fitness}\n")
-
-    # Possibly check partial genes in best solution
-    snippet = best_solution[:10]
-    print(f"Best solution snippet: {snippet}")
-
-    num_zeros = np.count_nonzero(np.isclose(best_solution, 0.0))
-    print(f"Best solution zeros count: {num_zeros}")
-
-    best_perturbation = torch.tensor(best_solution).float().reshape(input_batch.shape[1:])
-    top_perturbations.append(best_perturbation)
-    print(f"Best perturbation magnitude: {torch.norm(best_perturbation).item()}")
 
     ########
     # VISUALIZATION
@@ -71,7 +99,7 @@ def on_generation_func(ga_instance, dataloader, device, config):
     if config["visualization"]["visualize"] and ga_instance.generations_completed % config["visualization"]["visualize_every"] == 0:
         print(f"Visualizing")
         # get the current best perturbation
-        visualize_images_batch(input_batch, best_perturbation)
+        visualize_images_batch(input_batch, best_perturb)
 
     ########
     # MODIFY DYNAMIC PROBABILITIES
@@ -82,9 +110,12 @@ def on_generation_func(ga_instance, dataloader, device, config):
     ga_instance.mutation_probability = mut_prob
     print(f"New crossover & mutation probabilities: {cross_prob}, {mut_prob}")
 
-    # print(f"Generation {ga_instance.generations_completed}: Current Fitness: Best Fitness = {ga_instance.best_solution()[1]}")
+    # print(f"Generation {ga_instance.generations_completed}: Current Fitness: Best Fitness = {ga_instance.best_sol()[1]}")
 
 
+########
+# DYNAMIC PROBABILITIES
+########
 
 def calculate_dynamic_probs(ga_instance, config):
 

@@ -6,8 +6,46 @@ import matplotlib.pyplot as plt
 import numpy as np
 import yaml
 import os
-
 from PIL import Image
+
+from ga.components.model import predict
+
+########
+# CALCULATING METRICS
+########
+
+def compute_norm(perturbation):
+    return torch.norm(perturbation).item()
+
+    
+def compute_misclassification(model, input_batch, labels, perturbation):
+    perturbed_input = torch.clamp(input_batch + perturbation.unsqueeze(0), 0, 1)
+    prediction = predict(model, perturbed_input) 
+    # Calculate fitness based on misclassification likelihood (maximise misclassification)
+    misclassification_score = (prediction != labels).float().mean().item() # Get the mean of misclassification
+    return misclassification_score
+
+def compute_confidence_score(model, input_batch, labels):
+    # Here we are calculating the confidence of the model on the correct labels - the average correct-class probability across all samples
+    with torch.no_grad():
+        outputs = model(input_batch)
+
+    correct_prob = []
+    for i in range(outputs.size(0)):
+        correct_label = labels[i].item()
+        probs = torch.softmax(outputs[i], dim=0)
+        correct_prob.append(probs[correct_label].item())
+    
+    confidence_score = sum(correct_prob) / len(correct_prob)
+    
+    return confidence_score
+
+def compute_avg_mse(input_batch, perturbation):
+    # Compute the MSE between the perturbed and original images
+    perturbed_input = torch.clamp(input_batch + perturbation.unsqueeze(0), 0, 1)
+    mse = torch.mean((perturbed_input - input_batch) ** 2).item()
+    return mse
+
 
 
 ########
