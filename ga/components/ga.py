@@ -42,6 +42,7 @@ def on_generation_func(ga_instance, dataloader, model, device, config, metrics_l
     best_sol, best_fit, _ = ga_instance.best_solution()
     best_perturb = torch.tensor(best_sol).float().reshape(input_batch.shape[1:]).float().to(device)
     print(f"Best Fitness = {best_fit}")
+    top_perturbations.append(best_perturb)
 
     # # Possibly check partial genes in best solution
     # snippet = best_sol[:10]
@@ -78,7 +79,7 @@ def on_generation_func(ga_instance, dataloader, model, device, config, metrics_l
     # SWITCHING BATCHES
     ########
     current_gen = ga_instance.generations_completed
-    if current_gen % 4 == 0:
+    if current_gen % 8 == 0:
         input_batch, labels = next(iter(dataloader))
         input_batch, labels = input_batch.to(device), labels.to(device)
         ga_instance.user_data["input_batch"] = input_batch

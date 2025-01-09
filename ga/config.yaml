@@ -14,7 +14,7 @@ crossover:
   p_crossover_end: 0.4
   pixel_cleaning_probability: 0.1
 
-mutation:
+mutation:   
   p_mutation_init: 0.6
   p_mutation_end: 0.2
   # p_m: 0.3
